@@ -3,10 +3,8 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "@features/auth/store/authStore";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, rehydrate } = useAuthStore((s) => ({
-    isAuthenticated: s.isAuthenticated,
-    rehydrate: s.rehydrate,
-  }));
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const rehydrate = useAuthStore((s) => s.rehydrate);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
