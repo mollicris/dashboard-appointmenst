@@ -3,9 +3,10 @@ import type { Business } from "@domain/business/Business";
 import { httpClient } from "@core/api/http-client";
 import { ApiError } from "@core/api/http-client";
 
-interface ApiPageResponse<T> {
+interface PaginatedResponse<T> {
   success: boolean;
   data: T[];
+  pagination: { total: number; page: number; page_size: number; pages: number };
 }
 
 interface ApiResponse<T> {
@@ -13,37 +14,41 @@ interface ApiResponse<T> {
   data: T;
 }
 
-interface BusinessDto {
-  id: string;
-  tenant_id: string;
+interface BusinessSummaryDto {
+  business_id: string;
   name: string;
-  industry: string;
-  phone: string | null;
-  email: string | null;
+  slug: string;
+  phone: string;
   is_active: boolean;
 }
 
-function toBusinessDomain(dto: BusinessDto): Business {
+interface BusinessDetailDto extends BusinessSummaryDto {
+  email: string | null;
+  address: string | null;
+  description: string | null;
+  timezone: string;
+}
+
+function toBusinessDomain(dto: BusinessSummaryDto): Business {
   return {
-    id: dto.id,
-    tenantId: dto.tenant_id,
+    id: dto.business_id,
     name: dto.name,
-    industry: dto.industry,
+    slug: dto.slug,
     phone: dto.phone,
-    email: dto.email,
+    email: (dto as BusinessDetailDto).email ?? null,
     isActive: dto.is_active,
   };
 }
 
 export class BusinessApiAdapter implements IBusinessRepository {
   async list(): Promise<Business[]> {
-    const res = await httpClient.get<ApiPageResponse<BusinessDto>>("/api/v1/businesses");
+    const res = await httpClient.get<PaginatedResponse<BusinessSummaryDto>>("/api/v1/businesses");
     return res.data.map(toBusinessDomain);
   }
 
   async getById(id: string): Promise<Business | null> {
     try {
-      const res = await httpClient.get<ApiResponse<BusinessDto>>(`/api/v1/businesses/${id}`);
+      const res = await httpClient.get<ApiResponse<BusinessDetailDto>>(`/api/v1/businesses/${id}`);
       return toBusinessDomain(res.data);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) return null;

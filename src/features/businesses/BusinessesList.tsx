@@ -5,15 +5,6 @@ import { PageLoader } from "@shared/components/ui/LoadingSpinner";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { container } from "@infrastructure/di/container";
 
-const INDUSTRY_LABELS: Record<string, string> = {
-  hair_salon: "Salón de Belleza",
-  veterinary: "Veterinaria",
-  mechanic: "Mecánica",
-  clinic: "Clínica",
-  gym: "Gimnasio",
-  other: "Otro",
-};
-
 export function BusinessesList() {
   const { data: businesses, isLoading, isError } = useQuery({
     queryKey: ["businesses"],
@@ -48,9 +39,7 @@ export function BusinessesList() {
               <div className="mb-3 flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold">{biz.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {INDUSTRY_LABELS[biz.industry] ?? biz.industry}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{biz.slug}</p>
                 </div>
                 <Badge
                   label={biz.isActive ? "Activa" : "Inactiva"}
