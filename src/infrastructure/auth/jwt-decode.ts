@@ -7,7 +7,7 @@ interface JwtClaims {
 }
 
 export function decodeJwt(token: string): JwtClaims {
-  const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+  const base64 = (token.split(".")[1] ?? "").replaceAll("-", "+").replaceAll("_", "/");
   const json = decodeURIComponent(
     atob(base64)
       .split("")

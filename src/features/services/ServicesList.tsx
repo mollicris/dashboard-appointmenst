@@ -57,7 +57,7 @@ export function ServicesList() {
                     {service.durationMinutes} min
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {service.price > 0
+                    {service.price != null && service.price > 0
                       ? `$${(service.price / 100).toFixed(0)}`
                       : "—"}
                   </td>
