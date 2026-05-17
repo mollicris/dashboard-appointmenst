@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { MessageCircle, ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
+import { MessageCircle, ArrowLeft, RefreshCw, AlertTriangle, UserCheck } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@shared/components/ui/Badge";
 import { PageLoader } from "@shared/components/ui/LoadingSpinner";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { container } from "@infrastructure/di/container";
+import { humanTransferApi } from "@infrastructure/conversation/HumanTransferApiAdapter";
 import type { ConversationSummary, ConversationDetail, Message } from "@domain/conversation/Conversation";
+import type { HumanTransfer } from "@domain/conversation/HumanTransfer";
 import { useCurrentBusiness } from "../appointments/hooks/useCurrentBusiness";
 
 const STATE_LABELS: Record<string, string> = {
@@ -53,15 +56,40 @@ export function ConversationsList() {
     refetchInterval: 10_000,
   });
 
+  const transferQuery = useQuery({
+    queryKey: ["transfers", businessId, "pending"],
+    queryFn: () => humanTransferApi.listByBusiness(businessId!, "pending"),
+    enabled: !!businessId && !!selectedId,
+  });
+
+  const qc = useQueryClient();
+  const resolveMutation = useMutation({
+    mutationFn: (transferId: string) => humanTransferApi.resolve(transferId),
+    onSuccess: () => {
+      toast.success("Conversación devuelta al bot");
+      qc.invalidateQueries({ queryKey: ["conversation-messages", selectedId] }).catch(() => {});
+      qc.invalidateQueries({ queryKey: ["conversations", businessId] }).catch(() => {});
+      qc.invalidateQueries({ queryKey: ["transfers"] }).catch(() => {});
+    },
+    onError: () => toast.error("No se pudo resolver el escalamiento"),
+  });
+
   if (bizLoading || listQuery.isLoading) return <PageLoader />;
 
   if (selectedId) {
+    const activeTransfer = transferQuery.data?.find(
+      (t) => t.conversationId === selectedId && t.status === "pending",
+    ) ?? null;
+
     return (
       <ConversationDetail
         detail={detailQuery.data ?? null}
         isLoading={detailQuery.isLoading}
+        activeTransfer={activeTransfer}
         onBack={() => setSelectedId(null)}
         onRefresh={() => detailQuery.refetch()}
+        onResolve={(id) => resolveMutation.mutate(id)}
+        isResolving={resolveMutation.isPending}
       />
     );
   }
@@ -153,13 +181,19 @@ function ConversationRow({
 function ConversationDetail({
   detail,
   isLoading,
+  activeTransfer,
   onBack,
   onRefresh,
+  onResolve,
+  isResolving,
 }: Readonly<{
   detail: ConversationDetail | null;
   isLoading: boolean;
+  activeTransfer: HumanTransfer | null;
   onBack: () => void;
   onRefresh: () => void;
+  onResolve: (transferId: string) => void;
+  isResolving: boolean;
 }>) {
   if (isLoading || !detail) return <PageLoader />;
 
@@ -168,6 +202,27 @@ function ConversationDetail({
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
+      {/* Escalation banner */}
+      {activeTransfer && (
+        <div className="mb-3 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <span className="font-medium text-destructive">Escalado al staff</span>
+            {activeTransfer.reason && (
+              <span className="text-muted-foreground">— {activeTransfer.reason}</span>
+            )}
+          </div>
+          <button
+            onClick={() => onResolve(activeTransfer.transferId)}
+            disabled={isResolving}
+            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            <UserCheck className="h-3.5 w-3.5" />
+            {isResolving ? "Resolviendo…" : "Resolver y reactivar bot"}
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <button
