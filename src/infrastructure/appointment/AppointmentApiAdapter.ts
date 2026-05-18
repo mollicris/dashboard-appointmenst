@@ -24,8 +24,11 @@ interface ApiResponse<T> {
 interface AppointmentDto {
   appointment_id: string;
   service_id: string;
+  service_name: string;
   client_id: string;
+  client_name: string;
   professional_id: string | null;
+  professional_name: string | null;
   scheduled_at: string;
   duration_minutes: number;
   ends_at: string;
@@ -43,8 +46,11 @@ function toAppointment(dto: AppointmentDto): Appointment {
     id: dto.appointment_id,
     businessId: "",
     serviceId: dto.service_id,
+    serviceName: dto.service_name || "Unknown Service",
     clientId: dto.client_id,
+    clientName: dto.client_name || "Unknown Client",
     professionalId: dto.professional_id,
+    professionalName: dto.professional_name ?? null,
     scheduledAt: new Date(dto.scheduled_at),
     durationMinutes: dto.duration_minutes,
     endsAt: new Date(dto.ends_at),
@@ -80,6 +86,12 @@ export class AppointmentApiAdapter implements IAppointmentRepository {
   async cancel(appointmentId: string, reason?: string): Promise<void> {
     await httpClient.patch(`/api/v1/appointments/${appointmentId}/cancel`, {
       reason: reason ?? null,
+    });
+  }
+
+  async reschedule(appointmentId: string, newTime: Date): Promise<void> {
+    await httpClient.patch(`/api/v1/appointments/${appointmentId}/reschedule`, {
+      new_scheduled_at: newTime.toISOString(),
     });
   }
 

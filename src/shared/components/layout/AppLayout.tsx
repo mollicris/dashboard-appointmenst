@@ -4,7 +4,9 @@ import {
   CalendarDays,
   MessageCircle,
   Scissors,
+  Users,
   Building2,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +20,9 @@ const navigation = [
   { to: "/appointments", label: "Citas", icon: CalendarDays },
   { to: "/conversations", label: "Conversaciones", icon: MessageCircle },
   { to: "/services", label: "Servicios", icon: Scissors },
+  { to: "/professionals", label: "Profesionales", icon: Users },
   { to: "/businesses", label: "Sucursales", icon: Building2 },
+  { to: "/settings", label: "Configuración", icon: Settings },
 ];
 
 export function AppLayout() {

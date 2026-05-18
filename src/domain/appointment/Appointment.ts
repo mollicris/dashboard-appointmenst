@@ -4,8 +4,11 @@ export interface Appointment {
   readonly id: string;
   readonly businessId: string;
   readonly serviceId: string;
+  readonly serviceName: string;
   readonly clientId: string;
+  readonly clientName: string;
   readonly professionalId: string | null;
+  readonly professionalName: string | null;
   readonly scheduledAt: Date;
   readonly durationMinutes: number;
   readonly endsAt: Date;

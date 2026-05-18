@@ -28,7 +28,7 @@ export function LoginPage() {
     try {
       const { token, user } = await container.loginUseCase.execute(data);
       setAuth(token, user);
-      navigate("/dashboard", { replace: true });
+      navigate(user.tenantStatus === "onboarding" ? "/onboarding" : "/dashboard", { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         toast.error("Credenciales incorrectas");

@@ -1,5 +1,5 @@
 import type { IBusinessRepository } from "@domain/business/IBusinessRepository";
-import type { Business } from "@domain/business/Business";
+import type { Business, UpdateWhatsappPayload } from "@domain/business/Business";
 import { httpClient } from "@core/api/http-client";
 import { ApiError } from "@core/api/http-client";
 
@@ -27,16 +27,30 @@ interface BusinessDetailDto extends BusinessSummaryDto {
   address: string | null;
   description: string | null;
   timezone: string;
+  whatsapp_phone_number_id: string | null;
+  owner_whatsapp: string | null;
+  has_whatsapp_app_secret: boolean;
+}
+
+interface WhatsappConfigDto {
+  business_id: string;
+  whatsapp_phone_number_id: string | null;
+  owner_whatsapp: string | null;
+  has_whatsapp_app_secret: boolean;
 }
 
 function toBusinessDomain(dto: BusinessSummaryDto): Business {
+  const detail = dto as Partial<BusinessDetailDto>;
   return {
     id: dto.business_id,
     name: dto.name,
     slug: dto.slug,
     phone: dto.phone,
-    email: (dto as BusinessDetailDto).email ?? null,
+    email: detail.email ?? null,
     isActive: dto.is_active,
+    whatsappPhoneNumberId: detail.whatsapp_phone_number_id ?? null,
+    ownerWhatsapp: detail.owner_whatsapp ?? null,
+    hasWhatsappAppSecret: detail.has_whatsapp_app_secret ?? false,
   };
 }
 
@@ -54,5 +68,28 @@ export class BusinessApiAdapter implements IBusinessRepository {
       if (err instanceof ApiError && err.status === 404) return null;
       throw err;
     }
+  }
+
+  async updateWhatsapp(id: string, payload: UpdateWhatsappPayload): Promise<Business> {
+    const res = await httpClient.patch<ApiResponse<WhatsappConfigDto>>(
+      `/api/v1/businesses/${id}/whatsapp`,
+      {
+        phone_number_id: payload.phoneNumberId,
+        app_secret: payload.appSecret,
+        owner_whatsapp: payload.ownerWhatsapp,
+      },
+    );
+    const dto = res.data;
+    return {
+      id,
+      name: "",
+      slug: "",
+      phone: "",
+      email: null,
+      isActive: true,
+      whatsappPhoneNumberId: dto.whatsapp_phone_number_id,
+      ownerWhatsapp: dto.owner_whatsapp,
+      hasWhatsappAppSecret: dto.has_whatsapp_app_secret,
+    };
   }
 }

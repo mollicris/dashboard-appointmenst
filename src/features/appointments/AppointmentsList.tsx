@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 import { CalendarDays, X } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@shared/components/ui/Badge";
@@ -90,6 +91,7 @@ export function AppointmentsList() {
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Fecha y hora</th>
                   <th className="px-4 py-3 text-left font-medium">Duración</th>
+                  <th className="px-4 py-3 text-left font-medium">Profesional</th>
                   <th className="px-4 py-3 text-left font-medium">Estado</th>
                   <th className="px-4 py-3 text-left font-medium">Notas</th>
                   <th className="px-4 py-3 text-left font-medium">Acciones</th>
@@ -151,13 +153,16 @@ function AppointmentRow({
     <tr className="hover:bg-muted/20">
       <td className="px-4 py-3">
         <div className="font-medium">
-          {format(apt.scheduledAt, "dd MMM yyyy", { locale: es })}
+          {formatInTimeZone(apt.scheduledAt, "UTC", "dd MMM yyyy", { locale: es })}
         </div>
         <div className="text-xs text-muted-foreground">
-          {format(apt.scheduledAt, "HH:mm")} – {format(apt.endsAt, "HH:mm")}
+          {formatInTimeZone(apt.scheduledAt, "UTC", "HH:mm")} – {formatInTimeZone(apt.endsAt, "UTC", "HH:mm")}
         </div>
       </td>
       <td className="px-4 py-3 text-muted-foreground">{apt.durationMinutes} min</td>
+      <td className="px-4 py-3 text-muted-foreground">
+        {apt.professionalName ?? "—"}
+      </td>
       <td className="px-4 py-3">
         <StatusBadge status={apt.status} />
       </td>

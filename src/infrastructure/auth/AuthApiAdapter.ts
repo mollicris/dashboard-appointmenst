@@ -1,8 +1,7 @@
 import type { IAuthRepository, LoginCredentials, LoginResult } from "@domain/auth/IAuthRepository";
 import type { AuthToken } from "@domain/auth/AuthToken";
-import type { User, UserRole } from "@domain/auth/User";
+import type { TenantStatus, User } from "@domain/auth/User";
 import { httpClient } from "@core/api/http-client";
-import { decodeJwt } from "./jwt-decode";
 
 interface TokenDto {
   access_token: string;
@@ -18,6 +17,7 @@ interface MeDto {
   tenant_id: string;
   email: string;
   role: string;
+  tenant_status: string;
 }
 
 function toAuthToken(dto: TokenDto): AuthToken {
@@ -35,13 +35,9 @@ export class AuthApiAdapter implements IAuthRepository {
   async login(credentials: LoginCredentials): Promise<LoginResult> {
     const dto = await httpClient.post<TokenDto>("/api/v1/auth/login", credentials);
     const token = toAuthToken(dto);
-    const claims = decodeJwt(token.accessToken);
-    const user: User = {
-      id: claims.sub,
-      tenantId: claims.tenant_id,
-      email: claims.email,
-      role: claims.role as UserRole,
-    };
+    // Set token so me() can authenticate immediately
+    httpClient.setTokenProvider(() => token.accessToken);
+    const user = await this.me();
     return { token, user };
   }
 
@@ -63,6 +59,7 @@ export class AuthApiAdapter implements IAuthRepository {
       tenantId: dto.tenant_id,
       email: dto.email,
       role: dto.role as User["role"],
+      tenantStatus: dto.tenant_status as TenantStatus,
     };
   }
 }

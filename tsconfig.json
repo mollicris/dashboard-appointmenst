@@ -25,7 +25,8 @@
       "@core/*": ["./src/core/*"],
       "@domain/*": ["./src/domain/*"],
       "@application/*": ["./src/application/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"]
+      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@pages/*": ["./src/pages/*"]
     }
   },
   "include": ["src", "vite.config.ts"],
