@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Save, X, Plus } from "lucide-react";
-import { businessHoursApi, type DaySchedule, type SetScheduleRequest } from "@infrastructure/api/business-hours";
+import { businessHoursApi, type SetScheduleRequest } from "@infrastructure/api/business-hours";
 
 interface BusinessHoursConfigProps {
   readonly businessId: string;
@@ -60,7 +60,7 @@ export function BusinessHoursConfig({ businessId }: BusinessHoursConfigProps) {
         if (!dayMap.has(i)) {
           dayMap.set(i, {
             day_of_week: i,
-            day_name: DAY_NAMES[i],
+            day_name: DAY_NAMES[i] ?? "",
             is_closed: false,
             ranges: [{ open_at: "09:00", close_at: "18:00" }],
           });
@@ -80,7 +80,7 @@ export function BusinessHoursConfig({ businessId }: BusinessHoursConfigProps) {
               day_of_week: day.day_of_week,
               open_at: "09:00",
               close_at: "09:00",
-              is_closed: true,
+              is_closed: true as boolean,
             }];
           }
           return day.ranges.map((range) => ({
